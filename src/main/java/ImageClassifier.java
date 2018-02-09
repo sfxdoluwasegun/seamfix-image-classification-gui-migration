@@ -58,13 +58,14 @@ public class ImageClassifier {
         validButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                if (currentFileIndex < inputFiles.length - 1) {
 
-                    try {
-                        Files.copy(currentFile.toPath(), new File(outputDir + validOutputDir + currentFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    }
+                try {
+                    Files.move(currentFile.toPath(), new File(outputDir + validOutputDir + currentFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+                if (currentFileIndex < inputFiles.length - 1) {
 
                     moveToNextImage();
 
@@ -77,13 +78,16 @@ public class ImageClassifier {
             public void actionPerformed(ActionEvent e) {
 
                 try {
-                    Files.copy(currentFile.toPath(), new File(outputDir + invalidOutputDir + currentFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    Files.move(currentFile.toPath(), new File(outputDir + invalidOutputDir + currentFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
 
-                moveToNextImage();
+                if (currentFileIndex < inputFiles.length - 1) {
 
+                    moveToNextImage();
+
+                }
 
 
             }
@@ -134,7 +138,8 @@ public class ImageClassifier {
         imageIcon = new ImageIcon(newimg);
 
         imageLabel.setIcon(imageIcon);
-        titleImage.setText(currentFile.getName());
+        int size = inputFiles == null ? 0 : inputFiles.length;
+        titleImage.setText(String.format("%s / %s  %s", currentFileIndex + 1, size, currentFile.getName()));
     }
 
 
