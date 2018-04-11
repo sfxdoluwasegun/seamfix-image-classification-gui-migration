@@ -1,3 +1,5 @@
+import org.jnbis.api.Jnbis;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -43,7 +45,7 @@ public class ImageClassifier {
         System.out.println(new File(inputDir).getAbsolutePath());
 
         this.inputFiles = new File(inputDir).listFiles();
-        this.currentFile = inputFiles != null ? inputFiles[currentFileIndex] : null;
+        this.currentFile = inputFiles != null && inputFiles.length > 0 ? inputFiles[currentFileIndex] : null;
 
         if (currentFile == null) {
 
@@ -130,7 +132,9 @@ public class ImageClassifier {
     }
 
     private void updateDisplayedImage() {
-        ImageIcon imageIcon = new ImageIcon(currentFile.getAbsolutePath());
+
+        byte[] convertedWsqToPngBytes = Jnbis.wsq().decode(new File(currentFile.getAbsolutePath())).toPng().asByteArray();
+        ImageIcon imageIcon = new ImageIcon(convertedWsqToPngBytes);
 
         //scale the image.
         Image image = imageIcon.getImage(); // transform it
