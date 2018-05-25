@@ -31,8 +31,10 @@ public class ImageClassifier {
     private JButton invalidButton;
     private JLabel imageLabel;
     private JLabel titleImage;
+    private JLabel originalImage;
     private static String outputDir = "./files/output/";
     private static String validOutputDir = "valid/";
+    private static String originalOutputDir = "original/";
     private static String invalidOutputDir = "invalid/";
     private static String inputDir = "./files/input/";
     private static String modelInputDir = "./files/model";
@@ -91,6 +93,10 @@ public class ImageClassifier {
 
 
                 try {
+                    //copy original
+                    Files.copy(currentFile.toPath(), new File(outputDir + originalOutputDir + currentFile.getName()).toPath());
+
+                    //Copy optimized
                     saveCurrentOptimizedImageToFile();
                     Files.move(currentFile.toPath(), new File(outputDir + validOutputDir + currentFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
                 } catch (IOException e1) {
@@ -131,7 +137,6 @@ public class ImageClassifier {
             @Override
             public void keyPressed(KeyEvent e) {
 
-                System.out.println("Hello");
                 if (e.getKeyCode() == KeyEvent.VK_I) {
 
                     invalidButton.doClick();
@@ -153,7 +158,7 @@ public class ImageClassifier {
 
         Image img = ((ImageIcon) imageLabel.getIcon()).getImage();
 
-        BufferedImage bi = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_RGB);
+        BufferedImage bi = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_BYTE_GRAY);
 
         Graphics2D g2 = bi.createGraphics();
         g2.drawImage(img, 0, 0, null);
@@ -168,9 +173,13 @@ public class ImageClassifier {
     }
 
     private void createOutputDirs() {
+
         new File(outputDir).mkdirs();
+
         new File(outputDir + validOutputDir).mkdirs();
         new File(outputDir + invalidOutputDir).mkdirs();
+        new File(outputDir + originalOutputDir).mkdirs();
+
     }
 
     private void moveToNextImage() {
@@ -197,9 +206,10 @@ public class ImageClassifier {
 
         resizedImage.setImage(removedBackground);
 
-        originalImage.setImage(scaleUpImage(400, 400, resizedImage));
+        resizedImage.setImage(scaleUpImage(400, 400, resizedImage));
 
-        imageLabel.setIcon(originalImage);
+        this.originalImage.setIcon(scaleImage(originalImage, 170, 170));
+        imageLabel.setIcon(resizedImage);
         int size = inputFiles == null ? 0 : inputFiles.length;
         titleImage.setText(String.format("%s / %s  %s", currentFileIndex + 1, size, currentFile.getName()));
     }
@@ -229,6 +239,10 @@ public class ImageClassifier {
                 if (color.equals(Color.white)) {
 
                     bi.setRGB(x, y, Color.white.getRGB());
+
+                } else {
+
+                    bi.setRGB(x, y, Color.black.getRGB());
 
                 }
             }
