@@ -7,7 +7,9 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Stack;
 
 public class ImageClassifier {
     private final File[] inputFiles;
@@ -19,11 +21,12 @@ public class ImageClassifier {
     private JButton invalidButton;
     private JLabel imageLabel;
     private JLabel titleImage;
+    private JButton undoLastButton;
     private static String outputDir = "./files/output/";
     private static String validOutputDir = "valid/";
     private static String invalidOutputDir = "invalid/";
     private static String inputDir = "./files/input/";
-
+    private Stack<String> processedFilesStack = new Stack<>();
 
     public static void main(String[] args) {
 
@@ -56,11 +59,14 @@ public class ImageClassifier {
         updateDisplayedImage();
 
         validButton.addActionListener(new ActionListener() {
+
             public void actionPerformed(ActionEvent e) {
 
 
                 try {
                     Files.move(currentFile.toPath(), new File(outputDir + validOutputDir + currentFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    processedFilesStack.push(outputDir + validOutputDir + currentFile.getName());
+
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -70,6 +76,7 @@ public class ImageClassifier {
                     moveToNextImage();
 
                 }
+
             }
         });
 
@@ -79,6 +86,8 @@ public class ImageClassifier {
 
                 try {
                     Files.move(currentFile.toPath(), new File(outputDir + invalidOutputDir + currentFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    processedFilesStack.push(outputDir + invalidOutputDir + currentFile.getName());
+
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
@@ -89,7 +98,6 @@ public class ImageClassifier {
 
                 }
 
-
             }
         });
 
@@ -97,7 +105,6 @@ public class ImageClassifier {
             @Override
             public void keyPressed(KeyEvent e) {
 
-                System.out.println("Hello");
                 if (e.getKeyCode() == KeyEvent.VK_I) {
 
                     invalidButton.doClick();
@@ -106,6 +113,10 @@ public class ImageClassifier {
 
                     validButton.doClick();
 
+                } else if (e.getKeyCode() == KeyEvent.VK_Z) {
+
+                    undoLastButton.doClick();
+
                 }
 
             }
@@ -113,6 +124,40 @@ public class ImageClassifier {
 
         validButton.addKeyListener(shortcutKeyListeners);
         invalidButton.addKeyListener(shortcutKeyListeners);
+        undoLastButton.addKeyListener(shortcutKeyListeners);
+
+        undoLastButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                if (processedFilesStack.isEmpty()) {
+                    System.out.println("Nothing to go undo");
+                    return;
+                }
+
+                try {
+                    File lastProcessedFile = new File(processedFilesStack.pop());
+
+                    Files.move(lastProcessedFile.toPath(), new File(inputDir + lastProcessedFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+
+                moveToPreviousImage();
+
+            }
+        });
+    }
+
+    private void moveToPreviousImage() {
+
+        currentFileIndex--;
+
+        ImageClassifier.this.currentFile = inputFiles[currentFileIndex];
+
+        updateDisplayedImage();
+
     }
 
     private void createOutputDirs() {
@@ -134,7 +179,7 @@ public class ImageClassifier {
 
         //scale the image.
         Image image = imageIcon.getImage(); // transform it
-        Image newimg = image.getScaledInstance(400, 400,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
+        Image newimg = image.getScaledInstance(400, 400, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
         imageIcon = new ImageIcon(newimg);
 
         imageLabel.setIcon(imageIcon);
